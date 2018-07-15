@@ -17,6 +17,8 @@ pd.set_option('display.max_rows', 500)
 pd.set_option('display.max_columns', 500)
 pd.set_option('display.width', 1000)
 
+import matplotlib.pyplot as plt
+
 data = pd.Series([0.25, 0.5, 0.75, 1.0])
 data
 data.values
@@ -411,13 +413,300 @@ density.head()
 density.tail()
 
 # aggregating and grouping
+import seaborn as sns
+planets = sns.load_dataset('planets')
+planets.shape
+planets.head()
+planets.dropna().describe()
 
+# split, apply, combine
+df
+#df.groupby('key')
+#df.groupby('key').sum()
+planets.groupby('method')['orbital_period'].median()
+for (method,group) in planets.groupby('method'):
+    print('{0:30s} shape={1}'.format(method, group.shape))
+planets.groupby('method')['year'].describe().unstack()
 
+# groupby() :: aggregate(), filter(), transform(), apply()
+rng=np.random.RandomState(42)
+df = pd.DataFrame({'key' : ['A', 'B', 'C', 'A', 'B', 'C'],
+                   'data1': range(6), 
+                   'data2':rng.randint(0,10,6)},
+    columns=['key', 'data1', 'data2'])
 
+df
+df.groupby('key').aggregate([min, np.median, max])
+df.groupby('key').aggregate([min, np.median, 'max'])
+df.groupby('key').aggregate({'data1':'min', 'data2':max})
 
+def filter_func(x):
+    return x['data2'].std() > 4
 
+print(df)
+print(df.groupby('key').std())
+df.groupby('key').filter(filter_func)
 
+df.groupby('key').transform(lambda x : x-x.mean())
 
+def norm_by_data2(x):
+    x['data1'] /= x['data2'].sum()
+    return x
 
+df.groupby('key').apply(norm_by_data2)
+L = [0,1,0,1,2,0]
+df.groupby(L).sum()
+df.groupby(df['key']).sum()
 
+df2=df.set_index('key')
+mapping = {'A' : 'vowel' , 'B':'consonant', 'C':'consonant'}
+df2.groupby(mapping).sum()
+df2.groupby(str.lower).mean()
+df2.groupby([str.lower, mapping]).mean()
 
+import seaborn as sns
+planets = sns.load_dataset('planets')
+decade=10*(planets['year']//10)
+decade=decade.astype(str) + 's'
+planets['year'] = decade
+planets.head()
+planets = planets.rename(columns = {'year' : 'decade'})
+planets.head()
+planets.groupby(['method', 'decade'])['number'].sum().unstack().fillna(0)
+
+titanic = sns.load_dataset('titanic')
+titanic.head()
+titanic.groupby('sex')[['survived']].mean()
+titanic.groupby(['sex', 'class'])['survived'].aggregate('mean').unstack()
+
+titanic.pivot_table('survived', index='sex', columns='class')
+
+titanic = sns.load_dataset('titanic')
+titanic=titanic[['sex', 'age', 'class','survived', 'fare']]
+titanic = titanic.dropna()
+titanic.describe()
+titanic.shape
+titanic.isnull().sum().sum()
+age = pd.cut(titanic['age'], [0,18,80])
+age.value_counts()
+len(age)
+age.isnull().sum()
+titanic['age']=age
+titanic.columns
+titanic.pivot_table('survived', ['sex', 'age'], 'class')
+
+titanic = sns.load_dataset('titanic')
+titanic=titanic[['sex', 'age', 'class','survived', 'fare']]
+titanic = titanic.dropna()
+titanic.describe()
+age = pd.cut(titanic['age'], [0,18,80])
+fare=pd.qcut(titanic['fare'], 2)
+age
+fare
+titanic.pivot_table('survived', ['sex', age], [fare, 'class'])
+
+titanic.pivot_table(index='sex', columns='class', 
+                    aggfunc={'survived' : sum, 'fare' : 'mean'})
+
+titanic.pivot_table('survived', index='sex', columns='class', margins=True)
+
+births=pd.read_csv('./data/births.csv')
+births.head()
+births['decade'] = 10*(births['year']//10)
+births.head()
+
+births.pivot_table('births', index='decade', columns='gender', aggfunc='sum')
+births.pivot_table('births', index='decade', columns='gender', aggfunc='sum').T
+
+sns.set()
+births.pivot_table('births', index='year', columns='gender', aggfunc='sum').plot()
+
+quartiles = np.percentile(births['births'],[25,50,75])
+mu=quartiles[1]
+sig = 0.74*(quartiles[2] - quartiles[0])
+births = births.query('(births > @mu -5*@sig) & (births < @mu + 5*@sig)')
+births['day'] = births['day'].astype(int)
+births.head()
+
+births.index = pd.to_datetime(10000*births.year + 100*births.month + births.day, 
+                             format='%Y%m%d')
+births.head()
+births['dayofweek'] = births.index.dayofweek
+births.head()
+
+births.pivot_table('births', index='dayofweek', 
+                   columns='decade', aggfunc='mean').plot()
+plt.gca().set_xticklabels(['Mon', 'Thue', 'Wed', 'Thurs', 'Fri', 'Sat', 'Sun'])
+plt.ylabel('mean births by day')
+
+births_by_date = births.pivot_table('births', [births.index.month, births.index.day])
+births_by_date.head()
+# for 2012.02.29.
+births_by_date.index=[pd.datetime(2012, month, day) for (month, day) \
+in births_by_date.index]
+births_by_date.head()
+fig, ax = plt.subplots(figsize=(12,4))
+births_by_date.plot(ax=ax)
+
+x = np.array([2, 3, 5, 7, 11, 13])
+x*2
+# capitalize()
+
+data=['peter', 'Paul', 'MARY', 'gUIDO']
+[s.capitalize() for s in data]
+
+data = ['peter', 'Paul', None, 'MARY', 'gUIDO']
+names = pd.Series(data)
+names
+names.str.capitalize()
+
+monte = pd.Series(['Graham Chapman', 'John Cleese', 'Terry Gilliam', 'Eric Idle', 
+                   'Terry Jones', 'Michael Palin'])
+monte.str.lower()
+monte.str.startswith('T')
+monte.str.split()
+monte.str.extract('([A-Za-z]+)')
+monte.str.findall(r'^[^AEIOU].*[^aeiou]$') # regular exp :: why? how?
+monte.str[0:3]
+monte.str.split().str.get(-1)
+full_monte = pd.DataFrame({'name' : monte, 
+                          'info' : ['B|C|D', 'B|D', 'A|C', 'B|D', 'B|C', 'B|C|D']})
+full_monte
+full_monte['info'].str.get_dummies('|')
+
+# time_series
+
+from datetime import datetime
+datetime(year=2015, month=7, day=4)
+
+from dateutil import parser
+date = parser.parse('4th of July, 2015')
+date
+date = parser.parse('2015-7-4')
+date
+date = parser.parse('2015-07-04')
+date
+date = parser.parse('2015/7/4')
+date
+date = parser.parse('4/7/2015')
+date
+date = parser.parse('7/4/2015')
+date
+
+date.strftime('%A')
+date.strftime('%Y%m%d')
+date.strftime('%Y-%m-%d')
+date.strftime('%Y-%m-%d')
+date.strftime('%Y/%m/%d')
+
+date=np.array('2015-07-04', dtype=np.datetime64)
+date
+date + np.arange(12)
+np.datetime64('2015-07-04')
+np.datetime64('2015-07-04 12:00')
+np.datetime64('2015-07-04 12:59:59.50', 'ns')
+
+date=pd.to_datetime('4th of July, 2015')
+date
+date.strftime('%A')
+date + pd.to_timedelta(np.arange(12), 'D')
+
+index = pd.DatetimeIndex(['2014-07-04', '2014-08-04', '2015-07-04', 
+                          '2015-08-04'])
+data = pd.Series([0,1,2,3], index=index)
+data
+data['2014-07-04':'2015-07-04']
+data['2015']
+data['2015-07']
+
+# DatetimeIndex, PeriodIndex, TimedeltaIndex
+dates = pd.to_datetime([datetime(2015,7,3), '4th of July, 2015', 
+                        '2015-July-6', '07-07-2015', '20150708'])
+dates
+dates.to_period('D')
+dates-dates[0]
+
+# pd.date_range()
+pd.date_range('2015-07-03', '2015-07-10')
+pd.date_range('2015-07-03', periods=8)
+pd.date_range('2015-07-03', periods=8, freq='H')
+pd.period_range('2015-07', periods=8, freq='M')
+pd.timedelta_range(0, periods=10, freq='H')
+pd.timedelta_range(0, periods=9, freq='2H30T')
+
+from pandas.tseries.offsets import BDay
+pd.date_range('2015-07-01', periods=5, freq=BDay())
+
+# to pandas.api.types in Pandas 0.23.0.
+from pandas_datareader import data
+import pandas as pd
+pd.core.common.is_list_like = pd.api.types.is_list_like
+import fix_yahoo_finance as yf
+yf.pdr_override()
+
+#To get data:
+
+start = datetime.datetime(2004, 1, 1)
+end = datetime.datetime(2015, 8, 31)
+goog = data.get_data_yahoo('goog', start, end)
+goog.head()
+
+goog = goog['Close']
+goog.plot()
+
+# resample(), asfreq()
+goog.plot(alpha=.5, style='-')
+goog.resample('BA').mean().plot(style=':')
+goog.asfreq('BA').plot(style='--');
+plt.legend(['input', 'resample', 'asfreq'], loc='upper left')
+
+fig, ax = plt.subplots(2, sharex=True)
+data = goog.iloc[:10]
+data.asfreq('D').plot(ax=ax[0], marker='o')
+
+data.asfreq('D', method='bfill').plot(ax=ax[1], style='-o')
+data.asfreq('D', method='ffill').plot(ax=ax[1], style='--o')
+ax[1].legend(['back-fill', 'forward-fill']);
+
+fig, ax = plt.subplots(3, figsize=(15, 10), sharey=True)
+goog = goog.asfreq('D', method='pad')
+goog.plot(ax=ax[0])
+goog.shift(1000).plot(ax=ax[1])
+goog.tshift(1000).plot(ax=ax[2])
+
+local_max = pd.to_datetime('2007-11-05')
+offset = pd.Timedelta(900, 'D')
+
+ax[0].legend(['input'], loc=2)
+ax[0].get_xticklabels()[4].set(weight='heavy', color='red')
+ax[0].axvline(local_max, alpha=.3, color='red')
+
+ax[1].legend(['shift(900)'], loc=2)
+ax[1].get_xticklabels()[4].set(weight='heavy', color='red')
+ax[1].axvline(local_max + offset, alpha=.3, color='red')
+
+ax[2].legend(['tshift(900)'], loc=2)
+ax[2].get_xticklabels()[1].set(weight='heavy', color='red')
+ax[2].axvline(local_max + offset, alpha=.3, color='red')
+
+ROI=100*(goog.tshift(-365)/goog - 1)
+ROI.plot()
+plt.ylabel('% Return on Investment');
+
+# rollling window
+rolling = goog.rolling(365, center=True)
+data = pd.DataFrame({'input' : goog, 
+                     'one-year rolling_mean' : rolling.mean(),
+                     'one-year rolling_std' : rolling.std()})
+
+ax = data.plot(style=['-', '--', ':'])
+ax.lines[0].set_alpha(0.3)
+    
+    
+    
+    
+    
+    
+    
+    
+    
