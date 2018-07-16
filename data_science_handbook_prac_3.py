@@ -100,6 +100,34 @@ plt.axis('tight')
 plt.plot(x, np.sin(x))
 plt.axis('equal');
 
+plt.plot(x, np.sin(x))
+plt.title('A Single Curve')
+plt.xlabel('x')
+plt.ylabel('sin(x)')
+
+# plt.xlabel() --> ax.set_xlabel()
+# plt.ylabel() --> ax.set_ylabel()
+# plt.xlim() --> ax.set_xlim()
+# plt.ylim() --> ax.set_ylim()
+# plt.title() --> ax.set_title()
+
+ax = plt.axes()
+ax.plot(x, np.sin(x))
+ax.set(xlim=(0,10), ylim=(-2, 2), 
+       xlabel= 'x', ylabel='sin(x)', 
+       title='A Sample Plot')
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
