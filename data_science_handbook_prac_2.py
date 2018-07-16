@@ -8,8 +8,8 @@ Created on Fri Jul 13 23:22:15 2018
 # pandas
 from os import getcwd, chdir
 getcwd()
-#chdir('C:/Users/dsc/data_science_handbook')
-chdir('C:/Users/daniel/data_science_handbook')
+chdir('C:/Users/dsc/data_science_handbook')
+#chdir('C:/Users/daniel/data_science_handbook')
 
 import numpy as np
 import pandas as pd
@@ -638,16 +638,19 @@ from pandas.tseries.offsets import BDay
 pd.date_range('2015-07-01', periods=5, freq=BDay())
 
 # to pandas.api.types in Pandas 0.23.0.
-from pandas_datareader import data
 import pandas as pd
 pd.core.common.is_list_like = pd.api.types.is_list_like
+
+from pandas_datareader import data
 import fix_yahoo_finance as yf
 yf.pdr_override()
 
 #To get data:
-
+import datetime
 start = datetime.datetime(2004, 1, 1)
 end = datetime.datetime(2015, 8, 31)
+start
+end
 goog = data.get_data_yahoo('goog', start, end)
 goog.head()
 
@@ -701,12 +704,112 @@ data = pd.DataFrame({'input' : goog,
 
 ax = data.plot(style=['-', '--', ':'])
 ax.lines[0].set_alpha(0.3)
+
+
+data = pd.read_csv('./data/FremontBridge.csv', index_col = 'Date', parse_dates=True)
+data.head()    
+data.columns= ['West', 'East']    
+data.head()    
+data.tail()
+data['Total']= data.eval('West+East')    
+data.dropna().describe()    
     
-    
-    
-    
-    
-    
-    
-    
-    
+import seaborn; seaborn.set()    
+data.plot(figsize = (15, 5))    
+plt.ylabel('Hourly Bicyle Count')
+
+weekly = data.resample('W').sum()
+weekly.plot(style = [':', '--', '-'], figsize = (15, 4))
+plt.ylabel('Weekly Bicyle Count')
+
+daily = data.resample('D').sum()
+daily.rolling(30, center=True).sum().plot(style=[':', '--', '-'], figsize = (15, 4))
+plt.ylabel('mean hourly count')
+
+by_time = data.groupby(data.index.time).mean()
+#by_time.head()
+hourly_ticks= 4*60*60*np.arange(6)  # why 4*60*60*np.arange(6)??
+hourly_ticks
+by_time.plot(xticks=hourly_ticks, style=[':', '--', '-'], figsize=(15, 4))
+
+by_weekday = data.groupby(data.index.dayofweek).mean()
+by_weekday.head()
+by_weekday.index = ['Mon', 'Tues', 'Wed', 'Thurs', 'Fri', 'Sat', 'Sun']
+by_weekday.plot(style=[':', '--', '-'], figsize=(15, 4))
+
+weekend = np.where(data.index.weekday < 5, 'Weekday', 'Weekend')
+by_time = data.groupby([weekend, data.index.time]).mean()
+by_time.head()
+by_time.tail()
+
+fig, ax= plt.subplots(1, 2, figsize=(14, 5))
+by_time.ix['Weekday'].plot(ax=ax[0], title='Weekdays', xticks=hourly_ticks, 
+          style=[':', '--', '-'])
+by_time.ix['Weekend'].plot(ax=ax[1], title='Weekendx', xticks=hourly_ticks, 
+          style=[':', '--', '-']);
+          
+# eval(), query()
+rng = np.random.RandomState(42)
+x = rng.rand(10000000)
+y = rng.rand(10000000)
+
+mask = (x>0.5) & (y<0.5)
+tmp1 = (x>0.5)
+tmp2 = (y<0.5)
+mask = tmp1 & tmp2
+
+import numexpr
+mask_numexpr = numexpr.evaluate('(x>0.5) & (y<0.5)')
+np.allclose(mask, mask_numexpr)
+
+nrows, ncols = 10000, 100
+rng = np.random.RandomState(42)
+df1, df2, df3, df4 = (pd.DataFrame(rng.rand(nrows, ncols)) for i in range(4))
+df1.head()
+
+df1 + df2 + df3 + df4
+pd.eval('df1 + df2 + df3 + df4')
+df1, df2, df3, df4, df5 = (pd.DataFrame(rng.randint(0,1000, (100,3))) for i in range(5))
+result1 = -df1*df2/(df3+df4) - df5
+result2 = pd.eval('-df1*df2/(df3+df4) - df5')
+np.allclose(result1, result2)
+result1 = (df1 < 0.5) & (df2 < 0.5) | (df3 < df4)
+result2 = pd.eval('(df1 < 0.5) & (df2 < 0.5) | (df3 < df4)')
+np.allclose(result1, result2)
+result3 = pd.eval('(df1 < 0.5) and (df2 < 0.5) or (df3 < df4)')
+np.allclose(result1, result3)
+result1 = df2.T[0] + df2.iloc[1]
+result2 = pd.eval('df2.T[0] + df2.iloc[1]')
+np.allclose(result1, result2)
+
+df = pd.DataFrame(rng.rand(1000, 3), columns = ['A', 'B', 'C'])
+df.head()
+result1 = (df['A'] + df['B']) / (df['C'] - 1)
+result2 = pd.eval('(df.A + df.B) / (df.C - 1)')
+np.allclose(result1, result2)
+result3 = df.eval('(A+B) / (C-1)')
+np.allclose(result1, result3)
+
+df.head()
+df.eval('D = (A + B)/C', inplace=True)
+df.head()
+df.eval('D=(A-B)/C', inplace=True)
+df.head()
+
+df.head()
+df.mean(1)
+column_mean = df.mean(1) # .mean(axis=1)
+result1 = df['A'] + column_mean
+result2 = df.eval('A + @column_mean') # '@'only can be used in DataFrame.eval()
+np.allclose(result1, result2)
+
+result1 = df[(df.A < 0.5) & (df.B < 0.5)]
+result2 = pd.eval('df[(df.A < 0.5) & (df.B < 0.5)]')
+np.allclose(result1, result2)
+
+result2 = df.query('A < 0.5 and B < 0.5')
+np.allclose(result1, result2)
+Cmean = df['C'].mean()
+result1 = df[(df.A < Cmean) & (df.B < Cmean)]
+result2 = df.query('A < @Cmean and B < @Cmean')
+np.allclose(result1, result2)
