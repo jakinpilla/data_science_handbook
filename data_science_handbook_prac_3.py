@@ -7,8 +7,8 @@ Created on Mon Jul 16 12:02:33 2018
 
 from os import getcwd, chdir
 getcwd()
-# chdir('C:/Users/dsc/data_science_handbook')
-chdir('C:/Users/daniel/data_science_handbook')
+chdir('C:/Users/dsc/data_science_handbook')
+#chdir('C:/Users/daniel/data_science_handbook')
 
 import numpy as np
 import pandas as pd
@@ -345,5 +345,141 @@ view_colormap('jet')
 view_colormap('viridis')
 view_colormap('cubehelix')
 view_colormap('RdBu')
+
+x = np.linspace(0, 10, 1000)
+I = np.sin(x)*np.cos(x[:, np.newaxis])
+I.shape
+speckles = (np.random.random(I.shape) < 0.01)
+speckles.sum()
+I[speckles]
+I[speckles].shape
+np.random.normal(0, 3, 3)
+np.count_nonzero(speckles)
+np.random.normal(0, 3, np.count_nonzero(speckles))
+I[speckles] = np.random.normal(0, 3, np.count_nonzero(speckles))
+
+plt.figure(figsize=(10, 3.5))
+
+plt.subplot(1, 2, 1)
+plt.imshow(I,cmap='RdBu')
+plt.colorbar()
+
+plt.subplot(1, 2, 2)
+plt.imshow(I, cmap='RdBu')
+plt.colorbar(extend='both')
+plt.clim(-1, 1)
+
+plt.imshow(I, cmap=plt.cm.get_cmap('Blues', 6))
+plt.colorbar()
+plt.clim(-1, 1);
+
+from sklearn.datasets import load_digits
+digits = load_digits(n_class=6)
+digits
+
+digits.images[0]
+
+fig, ax= plt.subplots(8, 8, figsize=(10, 10))
+for i, axi in enumerate(ax.flat):
+    axi.imshow(digits.images[i], cmap='binary')
+    axi.set(xticks=[], yticks=[])
+
+# manifold learning projection
+from sklearn.manifold import Isomap
+iso = Isomap(n_components=2)
+projection = iso.fit_transform(digits.data)
+
+digits.data[0]
+digits.images[0]
+projection[:, 0]
+projection[:, 0].shape
+projection[:, 1]
+projection[:, 1].shape
+
+# plotting
+plt.scatter(projection[:, 0], projection[:, 1], lw=0.1,
+            c=digits.target, cmap=plt.cm.get_cmap('cubehelix', 6))
+plt.colorbar(ticks=range(6), label='digit value')
+plt.clim(-0.5, 5.5)
+
+# plt.axes
+ax1 = plt.axes()
+ax2 = plt.axes([0.65, 0.65, 0.2, 0.2])
+
+fig = plt.figure()
+ax1 = fig.add_axes([0.1, 0.5, 0.8, 0.4],
+                   xticklabels=[], ylim=(-1.2, 1.2))
+ax2 = fig.add_axes([0.1, 0.1, 0.8, 0.4],
+                   ylim=(-1.2, 1.2))
+x = np.linspace(0,10)
+ax1.plot(np.sin(x))
+ax2.plot(np.cos(x))
+
+for i in range(1, 7):
+    plt.subplot(2, 3, i)
+    plt.text(0.5, 0.5, str((2, 3, i)), fontsize=18, ha='center')
+
+fig = plt.figure()
+fig.subplots_adjust(hspace=.4, wspace=.4)
+for i in range(1, 7):
+    ax = fig.add_subplot(2,3,i)
+    ax.text(.5, .5, str((2, 3, i)), fontsize=18, ha='center')
+
+fig, ax = plt.subplots(2, 3, sharex='col', sharey='row')
+for i in range(2):
+    for j in range(3):
+        ax[i, j].text(0.5, 0.5, str((i, j)), fontsize=18, ha='center')
+fig
+
+grid = plt.GridSpec(2, 3, wspace=.4, hspace=.3)
+plt.subplot(grid[0, 0])
+plt.subplot(grid[0, 1:])
+plt.subplot(grid[1, :2])
+plt.subplot(grid[1, 2]);
+
+mean = [0, 0]
+cov = [[1,1], [1,2]]
+x, y = np.random.multivariate_normal(mean, cov, 3000).T
+
+# gridspec axes setting
+fig = plt.figure(figsize=(6, 6))
+grid =plt.GridSpec(4, 4, hspace=.2, wspace=.2)
+main_ax = fig.add_subplot(grid[:-1, 1:])
+y_hist = fig.add_subplot(grid[:-1, 0], xticklabels=[], sharey=main_ax)
+x_hist = fig.add_subplot(grid[-1, 1:], yticklabels=[], sharex=main_ax)
+
+# scattering
+main_ax.plot(x, y, 'ok', markersize=3, alpha=.2)
+
+# histogram per axis
+x_hist.hist(x, 40, histtype='stepfilled', orientation='vertical', color='gray')
+x_hist.invert_yaxis()
+y_hist.hist(y, 40, histtype='stepfilled', orientation='horizontal', color='gray')
+y_hist.invert_xaxis()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
