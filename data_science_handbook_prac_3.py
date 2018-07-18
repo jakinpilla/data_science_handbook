@@ -17,6 +17,7 @@ pd.set_option('display.max_columns', 500)
 pd.set_option('display.width', 1000)
 
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 
 x = np.linspace(0, 10, 100)
 plt.plot(x, np.sin(x))
@@ -457,29 +458,275 @@ x_hist.invert_yaxis()
 y_hist.hist(y, 40, histtype='stepfilled', orientation='horizontal', color='gray')
 y_hist.invert_xaxis()
 
+births = pd.read_csv('./data/births.csv')
+quartiles = np.percentile(births['births'], [25,50,75])
+mu, sig = quartiles[1], 0.74*(quartiles[2] - quartiles[0])
+births = births.query('(births > @mu -5*@sig) & (births < @mu + 5*@sig)')
+
+births['day'] = births['day'].astype(int)
+births.index = pd.to_datetime(10000*births.year + 100*births.month + births.day, format='%Y%m%d')
+births_by_date = births.pivot_table('births', [births.index.month, births.index.day])
+births_by_date.index = [pd.datetime(2012, month, day) for (month,day) in births_by_date.index]
+
+fig, ax = plt.subplots(figsize=(12, 4))
+births_by_date.plot(ax=ax);
+
+fig, ax = plt.subplots(figsize=(12, 4))
+births_by_date.plot(ax=ax)
+style =dict(size=10, color='gray')
+
+ax.text('2012-1-1', 3950, "New Year's Day", **style)
+ax.text('2012-7-4', 4250, "Independences Day", ha='center', **style)
+ax.text('2012-9-4', 4850, "Labor Day", ha='center', **style)
+ax.text('2012-10-31', 4600, "Halloween", ha='right', **style)
+ax.text('2012-11-25', 4450, "Thanksgiving", ha='center', **style)
+ax.text('2012-12-25', 3850, "Christmas", ha='right', **style)
+
+ax.set(title='USA births by day of year (1969-1988)', ylabel='average daily births')
+
+ax.xaxis.set_major_locator(mpl.dates.MonthLocator())
+ax.xaxis.set_minor_locator(mpl.dates.MonthLocator(bymonthday=15))
+ax.xaxis.set_major_formatter(plt.NullFormatter())
+ax.xaxis.set_minor_formatter(mpl.dates.DateFormatter('%h'))
+
+fig, ax = plt.subplots(facecolor='lightgray')
+ax.axis([0, 10, 0, 10])
+
+ax.text(1,5, ". Data: (1, 5)", transform=ax.transData)
+ax.text(.5,.1, ". Axes: (.5, .1)", transform=ax.transAxes)
+ax.text(.2,.2, ". Figure: (.2, .2)", transform=fig.transFigure);
+
+ax.set_xlim(0, 2)
+ax.set_ylim(-6, 6)
+fig
+
+fig, ax = plt.subplots()
+x = np.linspace(0,20,1000)
+ax.plot(x, np.cos(x))
+ax.axis('equal')
+ax.annotate('local maximum', xy=(6.28, 1), xytext=(10,4), 
+            arrowprops = dict(facecolor='black', shrink=0.05))
+ax.annotate('local minimum', xy=(5*np.pi, -1), xytext=(2, -6), 
+            arrowprops = dict(arrowstyle="->", connectionstyle='angle3,angleA=0,angleB=-90'))
+
+fig, ax = plt.subplots(figsize=(12, 4))
+births_by_date.plot(ax=ax)
+
+ax.annotate("New Year's Day", xy=('2012-1-1', 4100), xycoords='data', 
+            xytext=(50,-30), textcoords='offset points',
+            arrowprops=dict(arrowstyle='->', connectionstyle='arc3,rad=-0.2'))
+
+ax.annotate("Independence Day", xy=('2012-7-4', 4250), xycoords='data', 
+            bbox=dict(boxstyle='round', fc='none', ec='gray'),
+            xytext=(10,-40), textcoords='offset points', ha='center',
+            arrowprops=dict(arrowstyle='->'))
+
+ax.annotate("Labor Day", xy=('2012-9-4', 4850), xycoords='data', ha='center',
+            xytext=(0,-20), textcoords='offset points')
+
+ax.annotate('', xy=('2012-9-1', 4850),
+            xycoords='data', textcoords='data',
+            arrowprops={'arrowstyle' : '|-|,widthA=0.2,widthB=0.2',})
+
+ax.annotate('Halloween', xy=('2012-10-31', 4600), xycoords='data', 
+            xytext=(-80,-40), textcoords='offset points',
+            arrowprops=dict(arrowstyle='fancy', 
+                            fc='0.6', ec='none',
+                            connectionstyle='angle3,angleA=0,angleB=-90'))
+            
+ax.annotate('Thanksgiving', xy=('2012-11-25', 4500), xycoords='data', 
+            xytext=(-120,-60), textcoords='offset points',
+            bbox=dict(boxstyle='round4,pad=.5', fc='0.9'),
+            arrowprops=dict(arrowstyle='->', connectionstyle='angle,angleA=0,angleB=80,rad=20'))
+
+ax.annotate('Christmas', xy=('2012-12-25', 3850), xycoords='data', 
+            xytext=(-30,0), textcoords='offset points',
+            size=13, ha='right', va='center', 
+            bbox=dict(boxstlye='round', alpha=0.1),
+            arrowprops=dict(arrowstyle='wedge.tail_width=0.5', alpha=.1));
+
+ax= plt.axes(xscale='log', yscale='log')
+
+print(ax.xaxis.get_major_locator())
+print(ax.xaxis.get_minor_locator())
+print(ax.xaxis.get_major_formatter())
+print(ax.xaxis.get_minor_formatter())
+
+ax = plt.axes()
+ax.plot(np.random.rand(50))
+ax.yaxis.set_major_locator(plt.NullLocator())
+ax.xaxis.set_major_formatter(plt.NullFormatter())
+
+fig, ax = plt.subplots(5, 5, figsize=(5,5))
+fig.subplots_adjust(hspace=0, wspace=0)
+
+from sklearn.datasets import fetch_olivetti_faces
+faces = fetch_olivetti_faces().images
+
+for i in range(5):
+    for j in range(5):
+        ax[i, j].xaxis.set_major_locator(plt.NullLocator())
+        ax[i, j].yaxis.set_major_locator(plt.NullLocator())
+        ax[i, j].imshow(faces[10*i + j], cmap='bone')
+        
+fig, ax = plt.subplots(10, 10, figsize=(10,10))
+fig.subplots_adjust(hspace=0, wspace=0)
+
+from sklearn.datasets import fetch_olivetti_faces
+faces = fetch_olivetti_faces().images
+
+for i in range(10):
+    for j in range(10):
+        ax[i, j].xaxis.set_major_locator(plt.NullLocator())
+        ax[i, j].yaxis.set_major_locator(plt.NullLocator())
+        ax[i, j].imshow(faces[10*i + j], cmap='bone')
+        
+fig, ax= plt.subplots(4,4, sharex=True, sharey=True)
+for axi in ax.flat:
+    axi.xaxis.set_major_locator(plt.MaxNLocator(3))
+    axi.yaxis.set_major_locator(plt.MaxNLocator(3))
+fig
+
+fig, ax = plt.subplots()
+x = np.linspace(0, 3*np.pi, 1000)
+ax.plot(x, np.sin(x), lw=3, label='Sine')
+ax.plot(x, np.cos(x), lw=3, label='Cosine')
+
+ax.grid(True)
+ax.legend(frameon=False)
+ax.axis('equal')
+ax.set_xlim(0, 3*np.pi);
+
+ax.xaxis.set_major_locator(plt.MultipleLocator(np.pi/2))
+ax.xaxis.set_minor_locator(plt.MultipleLocator(np.pi/4))
+fig
+
+def format_func(value, tick_number):
+    N = int(np.round(2*value/np.pi))
+    
+    if N == 0:
+        return '0'
+    elif N == 1:
+        return r'$\pi/2$'
+    elif N == 2:
+        return r'$\pi$'
+    elif N % 2 > 0:
+        return r'${0}\pi/2$'.format(N)
+    else:
+        return r'${0}\pi$'.format(N//2)
 
 
+ax.xaxis.set_major_formatter(plt.FuncFormatter(format_func))
+fig
 
+# rc :: runtime configuration
+import matplotlib.pyplot as plt
+plt.style.use('classic')
+import numpy as np
 
+x = np.random.randn(1000)
+plt.hist(x);
 
+ax = plt.axes(facecolor='#E6E6E6')
+ax.set_axisbelow(True)
 
+plt.grid(color='w', linestyle='solid')
 
+for spine in ax.spines.values():
+    spine.set_visible(False)
+    
+ax.xaxis.tick_bottom()
+ax.yaxis.tick_left()
 
+ax.tick_params(colors='gray', direction='out')
+for tick in ax.get_xticklabels():
+    tick.set_color('gray')
+for tick in ax.get_yticklabels():
+    tick.set_color('gray')
+    
+ax.hist(x, edgecolor='#E6E6E6', color='#EE6666')
 
+IPython_default = plt.rcParams.copy()
 
+from matplotlib import cycler
+colors = cycler('color', 
+                ['#EE6666', '#3388BB', '#9988DD', 
+                 '#EECC55', '#88BB44', '#FFBBBB'])
+plt.rc('axes', facecolor='#E6E6E6', edgecolor='none',
+       axisbelow=True, grid=True, prop_cycle=colors)
+plt.rc('grid', color='w', linestyle='solid')
+plt.rc('xtick', direction='out', color='gray')
+plt.rc('ytick', direction='out', color='gray')
+plt.rc('patch', edgecolor='#E6E6E6')
+plt.rc('lines', linewidth=2)
 
+plt.hist(x)
 
+for i in range(4):
+    plt.plot(np.random.rand(10))
 
+plt.style.available[:5]
 
+def hist_and_lines():
+    np.random.seed(0)
+    fig, ax = plt.subplots(1, 2, figsize=(11, 4))
+    ax[0].hist(np.random.randn(1000))
+    for i in range(3):
+        ax[1].plot(np.random.rand(10))
+    ax[1].legend(['a', 'b', 'c'], loc='lower left')
 
+plt.rcParams.update(IPython_default);
 
+hist_and_lines()
 
+with plt.style.context('fivethirtyeight'):
+    hist_and_lines()
 
+with plt.style.context('ggplot'):
+    hist_and_lines()
 
+with plt.style.context('bmh'):
+    hist_and_lines()
 
+with plt.style.context('dark_background'):
+    hist_and_lines()
 
+with plt.style.context('grayscale'):
+    hist_and_lines()
 
+import seaborn
+hist_and_lines()
 
+from mpl_toolkits import mplot3d
+
+fig = plt.figure()
+ax = plt.axes(projection='3d')
+
+ax = plt.axes(projection='3d')
+zline = np.linspace(0,15,1000)
+xline = np.sin(zline)
+yline = np.cos(zline)
+ax.plot3D(xline, yline, zline, 'gray')
+zdata= 15*np.random.random(100)
+xdata = np.sin(zdata) + .1*np.random.randn(100)
+ydata = np.cos(zdata) + .1*np.random.randn(100)
+ax.scatter3D(xdata, ydata, zdata, c=zdata, cmap='Greens')
+
+def f(x, y):
+    return np.sin(np.sqrt(x**2 + y**2))
+
+x = np.linspace(-6, 6, 30)
+y = np.linspace(-6, 6, 30)
+
+X, Y = np.meshgrid(x, y)
+Z = f(X, Y)
+
+fig = plt.figure()
+ax = plt.axes(projection='3d')
+ax.contour3D(X, Y, Z, 50, cmap='binary')
+ax.set_xlabel('x')
+ax.set_ylabel('y')
+ax.set_zlabel('z')
 
 
 
