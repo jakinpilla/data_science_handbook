@@ -9,8 +9,8 @@ Created on Thu Jul 19 15:40:04 2018
 
 from os import getcwd, chdir
 getcwd()
-chdir('C:/Users/dsc/data_science_handbook')
-#chdir('C:/Users/daniel/data_science_handbook')
+# chdir('C:/Users/dsc/data_science_handbook')
+chdir('C:/Users/daniel/data_science_handbook')
 
 import numpy as np
 import pandas as pd
@@ -191,35 +191,172 @@ model.fit(X_train, y_train)
 y2_model = model.predict(X_test)
 accuracy_score(y_test, y2_model)
 
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.linear_model import LinearRegression
+from sklearn.pipeline import make_pipeline
+
+def PolynomialRegression(degree=2, **kwargs):
+    return make_pipeline(PolynomialFeatures(degree), LinearRegression(**kwargs))
+
+import numpy as np
+def make_data(N, err=1.0, rseed=1):
+    rng = np.random.RandomState(rseed)
+    X = rng.rand(N, 1)**2
+    y = 10-1./(X.ravel() + .1)
+    if err > 0:
+        y += err * rng.randn(N)
+    return X, y
+
+X, y = make_data(40)
+
+X.ravel()
+y
+
+import matplotlib.pyplot as plt
+import seaborn; seaborn.set()
+X_test = np.linspace(-.1, 1.1, 500)[:, None]
+
+plt.scatter(X.ravel(), y, color='black')
+axis = plt.axis()
+for degree in [1, 3, 5]:
+    y_test = PolynomialRegression(degree).fit(X, y).predict(X_test)
+    plt.plot(X_test.ravel(), y_test, label='degree={0}'.format(degree))
+
+plt.xlim(-0.1, 1.0)
+plt.ylim(-2, 12)
+plt.legend(loc='best')
 
 
+from sklearn.learning_curve import validation_curve
+degree = np.arange(0, 21)
+train_score, val_score = validation_curve(PolynomialRegression(), X, y,
+                                          'polynomialfeatures__degree', degree, cv=7)
 
+plt.plot(degree, np.median(train_score, 1), color='blue',label='training score')
+plt.plot(degree, np.median(val_score, 1), color='red',label='validation score')
+plt.legend(loc='best') # loc = 'best'!!
+plt.ylim(0,1)
+plt.xlabel('degree')
+plt.ylabel('score')
 
+plt.scatter(X.ravel(), y)
+lim = plt.axis()
+y_test = PolynomialRegression(3).fit(X, y).predict(X_test)
+plt.plot(X_test.ravel(), y_test);
+plt.axis(lim);
 
+X2, y2 = make_data(200)
+plt.scatter(X2.ravel(), y2);
 
+degree = np.arange(21)
+train_score2, val_score2 = validation_curve(PolynomialRegression(), X2, y2, 
+                                            'polynomialfeatures__degree', degree, cv=7)
+plt.plot(degree, np.median(train_score2, 1), color='blue', label='traiaing score')
+plt.plot(degree, np.median(val_score2, 1), color='red', label='validation score')
+plt.plot(degree, np.median(train_score, 1), color='blue', alpha=.3, linestyle='dashed')
+plt.plot(degree, np.median(val_score, 1), color='red', alpha=.3, linestyle='dashed')
+plt.legend(loc='lower center')
+plt.ylim(0, 1)
+plt.xlabel('degree')
+plt.ylabel('score')
 
+from sklearn.learning_curve import learning_curve
 
+fig, ax = plt.subplots(1,2, figsize=(16, 6))
+fig.subplots_adjust(left=0.0625, right=.95, wspace=.1)
 
+for i, degree in enumerate([2 ,9]):
+    N, train_lc, val_lc = learning_curve(PolynomialRegression(degree), X, y, cv=7, 
+                                         train_sizes=np.linspace(.3, 1, 25))
+    ax[i].plot(N, np.mean(train_lc, 1), color='blue', label='training score')
+    ax[i].plot(N, np.mean(val_lc, 1), color='red', label='validation score')
+    ax[i].hlines(np.mean([train_lc[-1], val_lc[-1]]), N[0], N[-1], color='gray', 
+      linestyle='dashed')
+    ax[i].set_ylim(0,1)
+    ax[i].set_xlim(N[0], N[-1])
+    ax[i].set_xlabel('training size')
+    ax[i].set_ylabel('score')
+    ax[i].set_title('degree= {0}'.format(degree), size=14)
+    ax[i].legend(loc='best')
 
+# GridSearchCV meta-estimator
 
+from sklearn.model_selection import GridSearchCV
 
+param_grid = {'polynomialfeatures__degree': np.arange(21),
+              'linearregression__fit_intercept': [True, False],
+              'linearregression__normalize': [True, False]}
 
+grid = GridSearchCV(PolynomialRegression(), param_grid, cv=7)
 
+grid.fit(X, y);
 
+grid.best_params_
 
+model = grid.best_estimator_
+plt.scatter(X.ravel(), y)
+lim = plt.axis()
+y_test = model.fit(X, y).predict(X_test)
+plt.plot(X_test.ravel(), y_test, hold=True)
+plt.axis(lim);
 
+# feature engineering
 
+# categorical data, derived feature, vectorization
 
+data = [
+        {'price' : 850000, 'rooms' : 4, 'nieghborhood' : 'Queen Anne'},
+        {'price' : 700000, 'rooms' : 3, 'nieghborhood' : 'Fremont'},
+        {'price' : 650000, 'rooms' : 3, 'nieghborhood' : 'Wallingford'},
+        {'price' : 600000, 'rooms' : 2, 'nieghborhood' : 'Fremont'},
+        ]
 
+# one-hot encoding
+from sklearn.feature_extraction import DictVectorizer
+vec = DictVectorizer(sparse=False, dtype=int)
+vec.fit_transform(data)
+vec.get_feature_names()
+vec = DictVectorizer(sparse=True, dtype=int)
+vec.fit_transform(data)
 
+sample = ['problem of evil',  'evil queen', 'horizon problem']
 
+from sklearn.feature_extraction.text import CountVectorizer
+vec = CountVectorizer()
+X = vec.fit_transform(sample)
+X
 
+import pandas as pd
+pd.DataFrame(X.toarray(), columns = vec.get_feature_names())
 
+from sklearn.feature_extraction.text import TfidfVectorizer
+vec = TfidfVectorizer()
+X = vec.fit_transform(sample)
+pd.DataFrame(X.toarray(), columns=vec.get_feature_names())
 
+import numpy as np
+import matplotlib.pyplot as plt
 
+x = np.array([1, 2, 3, 4, 5])
+y = np.array([4, 2, 1, 3, 7])
+plt.scatter(x, y);
 
+from sklearn.linear_model import LinearRegression
+X = x[:, np.newaxis]
+model = LinearRegression().fit(X, y)
+yfit = model.predict(X)
+plt.scatter(x, y)
+plt.plot(x, yfit)
 
+from sklearn.preprocessing import PolynomialFeatures
+poly = PolynomialFeatures(degree=3, include_bias=False)
+X2 = poly.fit_transform(X)
+print(X2)
 
+model = LinearRegression().fit(X2, y)
+yfit = model.predict(X2)
+plt.scatter(x, y)
+plt.plot(x, yfit)
 
 
 
