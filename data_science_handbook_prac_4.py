@@ -9,8 +9,8 @@ Created on Thu Jul 19 15:40:04 2018
 
 from os import getcwd, chdir
 getcwd()
-# chdir('C:/Users/dsc/data_science_handbook')
-chdir('C:/Users/daniel/data_science_handbook')
+chdir('C:/Users/dsc/data_science_handbook')
+# chdir('C:/Users/daniel/data_science_handbook')
 
 import numpy as np
 import pandas as pd
@@ -357,6 +357,122 @@ model = LinearRegression().fit(X2, y)
 yfit = model.predict(X2)
 plt.scatter(x, y)
 plt.plot(x, yfit)
+
+from numpy import nan
+X = np.array([[nan, 0, 3],
+              [3, 7, 9],
+              [3, 5, 2],
+              [4, nan, 6],
+              [8, 8, 1]])
+y = np.array([14, 16, -1, 8, -5])
+
+from sklearn.preprocessing import Imputer
+imp = Imputer(strategy='mean')
+X2 = imp.fit_transform(X)
+X2
+
+model = LinearRegression().fit(X2, y)
+model.predict(X2)
+
+from sklearn.pipeline import make_pipeline
+model= make_pipeline(Imputer(strategy='mean'), PolynomialFeatures(degree=2), 
+                             LinearRegression())
+
+model.fit(X, y)
+print(y)
+print(model.predict(X))
+
+from sklearn.datasets import make_blobs
+X, y = make_blobs(100, 2, centers=2, random_state=2, cluster_std=1.5)
+plt.scatter(X[:, 0], X[:, 1], c=y, s=50, cmap='RdBu')
+
+from sklearn,naive_bayes import GaussianNB
+model = GaussianNB()
+model.fit(X, y);
+
+rng = np.random.RandomState(0)
+Xnew = [-6, -14] + [14, 18]*rng.rand(2000, 2)
+ynew = model.predict(Xnew)
+
+plt.scatter(X[:, 0], X[:, 1], c=y, s=50, cmap='RdBu')
+lim = plt.axis()
+plt.scatter(Xnew[:, 0], Xnew[:, 1], c=ynew, s=20, cmap='RdBu', alpha=.1)
+plt.axis(lim)
+
+y_prob = model.predict_proba(Xnew)
+y_prob[-8:].round(2)
+
+from sklearn.datasets import fetch_20newsgroups
+data = fetch_20newsgroups()
+data.target_names
+
+categories=['talk.religion.misc', 'soc.religion.christian', 'sci.space', 'comp.graphics']
+train = fetch_20newsgroups(subset='train', categories=categories)
+test = fetch_20newsgroups(subset='test', categories=categories)
+print(train.data[5])
+
+train.target_names
+train.target
+
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.pipeline import make_pipeline
+
+model= make_pipeline(TfidfVectorizer(), MultinomialNB())
+model.fit(train.data, train.target)
+
+labels =model.predict(test.data)
+
+from sklearn.metrics import confusion_matrix
+mat = confusion_matrix(test.target, labels)
+sns.heatmap(mat.T, square=True, annot=True, fmt='d', cbar=False,
+            xticklabels=train.target_names, yticklabels=train.target_names)
+
+plt.xlabel('true label')
+plt.ylabel('predicted label')
+
+def predict_category(s, train=train, model=model):
+    pred = model.predict([s])
+    return train.target_names[pred[0]]
+
+predict_category('sending a payload to the ISS')
+predict_category('discussing islam vs atheism')
+predict_category('determining the screen resolution')
+
+rng = np.random.RandomState(1)
+x = 10*rng.rand(50)
+y = 2*x + rng.randn(50)
+plt.scatter(x, y)
+
+from sklearn.linear_model import LinearRegression
+model = LinearRegression(fit_intercept=True)
+model.fit(x[:, np.newaxis], y)
+
+xfit = np.linspace(0,10,1000)
+yfit = model.predict(xfit[:, np.newaxis])
+
+plt.scatter(x, y)
+plt.plot(xfit, yfit)
+
+print('Model slope :', model.coef_[0])
+print('Model slope :', model.coef_[0])
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
