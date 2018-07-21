@@ -9,8 +9,8 @@ Created on Thu Jul 19 15:40:04 2018
 
 from os import getcwd, chdir
 getcwd()
-chdir('C:/Users/dsc/data_science_handbook')
-# chdir('C:/Users/daniel/data_science_handbook')
+# chdir('C:/Users/dsc/data_science_handbook')
+chdir('C:/Users/daniel/data_science_handbook')
 
 import numpy as np
 import pandas as pd
@@ -386,7 +386,7 @@ from sklearn.datasets import make_blobs
 X, y = make_blobs(100, 2, centers=2, random_state=2, cluster_std=1.5)
 plt.scatter(X[:, 0], X[:, 1], c=y, s=50, cmap='RdBu')
 
-from sklearn,naive_bayes import GaussianNB
+from sklearn.naive_bayes import GaussianNB
 model = GaussianNB()
 model.fit(X, y);
 
@@ -455,24 +455,139 @@ plt.scatter(x, y)
 plt.plot(xfit, yfit)
 
 print('Model slope :', model.coef_[0])
-print('Model slope :', model.coef_[0])
+print('Model intercept :', model.intercept_)
 
 
+rng = np.random.RandomState(1)
+X = 10*rng.rand(100, 3)
+X
+plt.hist(X)
+X.shape
+X[:, 1]
+plt.hist(X[:, 0], alpha=.3)
+plt.hist(X[:, 1], alpha=.3)
+plt.hist(X[:, 2], alpha=.3)
 
+X[:,0].mean()
+X[:,0].std()
 
+X[:,1].mean()
+X[:,1].std()
 
+X[:,2].mean()
+X[:,2].std()
 
+y = .5 + np.dot(X, [1.5, -2, 1.])
+y.shape
+X.shape
 
+model.fit(X, y)
+print(model.intercept_)
+print(model.coef_)
 
+x = np.array([2, 3, 4])
+x[:, None]
+x.reshape(-1, 1)
+x[:, np.newaxis]
 
+from sklearn.preprocessing import PolynomialFeatures
+x = np.array([2, 3, 4])
+poly = PolynomialFeatures(3, include_bias=False)
+poly.fit_transform(x[:, None])
 
+from sklearn.pipeline import make_pipeline
+poly_model = make_pipeline(PolynomialFeatures(7), LinearRegression())
 
+rng = np.random.RandomState(1)
+x = 10*rng.rand(50)
+x
+y = np.sin(x) + .1*rng.randn(50)
+y
+poly_model.fit(x[:, np.newaxis], y)
+yfit = poly_model.predict(xfit[:, np.newaxis])
 
+plt.scatter(x, y)
+plt.plot(xfit, yfit)
 
+from sklearn.base import BaseEstimator, TransformerMixin
 
+class GaussianFeatures(BaseEstimator, TransformerMixin):
+    """1차원 입력에 대해 균일한 간격을 가지는 가우시안 특징"""
+    def __init__(self, N, width_factor=2.0):
+        self.N = N
+        self.width_factor = width_factor
+    @staticmethod
+    def _gauss_basis(x, y, width, axis=None):
+        arg = (x-y)/width
+        return np.exp(-.5*np.sum(arg**2, axis))
+    
+    def fit(self, X, y=None):
+        # 데이터 범위를 따라 펼쳐진 N개의 중앙점 생성
+        self.centers_ = np.linspace(X.min(), X.max(), self.N)
+        self.width_ = self.width_factor * (self.centers_[1] - self.centers_[0])
+        return self
+    
+    def transform(self, X):
+        return self._gauss_basis(X[:, :, np.newaxis], self.centers_, 
+                                    self.width_, axis=1)
+        
+gauss_model= make_pipeline(GaussianFeatures(20), LinearRegression())
+gauss_model.fit(x[:, np.newaxis], y)
+yfit = gauss_model.predict(xfit[:, np.newaxis])
 
+plt.scatter(x, y)
+plt.plot(xfit, yfit)
+plt.xlim(0,10)
 
+model = make_pipeline(GaussianFeatures(30), LinearRegression())
+model.fit(x[:, np.newaxis], y)
 
+plt.scatter(x, y)
+plt.plot(xfit, model.predict(xfit[:, np.newaxis]))
+
+def basis_plot(model, title=None):
+    fig, ax = plt.subplots(2, sharex=True)
+    model.fit(x[:, np.newaxis], y)
+    ax[0].scatter(x, y)
+    ax[0].plot(xfit, model.predict(xfit[:, np.newaxis]))
+    ax[0].set(xlabel='x', ylabel='y', ylim=(-1.5, 1.5))
+    
+    if title:
+        ax[0].set_title(title)
+        
+    ax[1].plot(model.steps[0][1].centers_, model.steps[1][1].coef_)
+    ax[1].set(xlabel='basis location', ylabel='coefficient', xlim=(0,10))
+
+model = make_pipeline(GaussianFeatures(30), LinearRegression())
+basis_plot(model)
+
+from sklearn.linear_model import Ridge
+model = make_pipeline(GaussianFeatures(30), Ridge(alpha=.1))
+basis_plot(model, title='Ridge Regression')
+
+from sklearn.linear_model import Lasso
+model = make_pipeline(GaussianFeatures(30), Lasso(alpha=.001))
+basis_plot(model, title='Lasso Regression')
+
+import pandas as pd
+counts = pd.read_csv('./data/FremontBridge.csv', index_col='Date', parse_dates=True)
+weather = pd.read_csv('./data/BicycleWeather.csv', index_col='DATE', 
+                      parse_dates=True)
+
+daily = counts.resample('d').sum()
+daily.head()
+daily['Total'] = daily.sum(axis=1)
+daily = daily[['Total']]
+daily.head()
+daily.index.dayofweek
+
+days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+for i in range(7):
+    daily[days[i]] = (daily.index.dayofweek == i).astype(float)
+
+daily.head()
+
+from pandas.tseries.holiday import USFederalHolidayCalendar
 
 
 
