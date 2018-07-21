@@ -588,6 +588,284 @@ for i in range(7):
 daily.head()
 
 from pandas.tseries.holiday import USFederalHolidayCalendar
+cal = USFederalHolidayCalendar()
+holidays = cal.holidays('2012', '2016')
+daily = daily.join(pd.Series(1, index=holidays, name='holiday'))
+daily['holiday'].fillna(0, inplace=True)
+daily.head()
+
+def hours_of_daylight(date, axis=23.44, latitude=47.61):
+    """해당 날짜의 일조시간을 계산"""
+    days =(date - pd.datetime(2000, 12, 21)).days
+    m = (1. - np.tan(np.radians(latitude)) * np.tan(np.radians(axis) * 
+                     np.cos(days * 2 * np.pi / 365.25)))
+    return 24. * np.degrees(np.arccos(1 - np.clip(m, 0, 2))) / 180.
+
+daily['daylight_hrs'] = list(map(hours_of_daylight, daily.index))
+daily[['daylight_hrs']].plot();
+plt.ylim(8,17)
+
+weather.head()
+weather['TMIN'] /= 10
+weather['TMAX'] /= 10
+weather['Temp(C)'] = .5 * (weather['TMIN'] + weather['TMAX'])
+weather.columns
+weather['PRCP']
+weather['PRCP'] /= 254
+weather['dry day'] = (weather['PRCP'] == 0).astype(int)
+
+daily.head()
+daily = daily.join(weather[['PRCP', 'Temp(C)', 'dry day']])
+
+(daily.index - daily.index[0]).days / 365
+daily['annual'] = (daily.index - daily.index[0]).days / 365
+daily.head()
+
+daily.dropna(axis=0, how='any', inplace=True)
+
+daily.columns
+X = daily.drop('Total', axis=1)
+X.head()
+y = daily['Total']
+y.head()
+
+model = LinearRegression(fit_intercept = False)
+model.fit(X, y)
+daily['predicted'] = model.predict(X)
+
+daily[['Total', 'predicted']].plot(alpha=.3, figsize = (15, 5))
+
+params = pd.Series(model.coef_, index=X.columns)
+params
+
+from sklearn.utils import resample
+np.random.seed(1)
+# bootstrapping
+[model.fit(*resample(X,y)).coef_ for i in range(1000)]
+err = np.std([model.fit(*resample(X,y)).coef_ for i in range(1000)], axis=0)
+print(pd.DataFrame({'effect' : params.round(0), 'error' : err.round(0)}))
+
+# SVM
+# discrimination classification
+
+X, y = make_blobs(n_samples=50, centers=2, random_state=0, cluster_std=.6)
+plt.scatter(X[:, 0], X[:, 1], c=y, s=50, cmap='autumn')
+
+xfit = np.linspace(-1, 3.5)
+plt.scatter(X[:, 0], X[:, 1], c=y, s=50, cmap='autumn')
+plt.plot([.6], [2.1], 'x', color='red', markeredgewidth=2, markersize=10)
+for m, b in [(1, 0.65), (.5, 1.6), (-.2, 2.9)]:
+    plt.plot(xfit, m*xfit + b, '-k')
+plt.xlim(-1, 3.5)
+
+xfit = np.linspace(-1, 3.5)
+plt.scatter(X[:,0], X[:,1], c=y, cmap='autumn')
+
+for m, b, d in [(1, .65, .33), (.5, 1.6, .55), (-.2, 2.9, .2)]:
+    yfit = m*xfit + b
+    plt.plot(xfit, yfit, '-k')
+    plt.fill_between(xfit, yfit-d, yfit + d, edgecolor='none',
+                     color='#AAAAAA', alpha=.4)
+
+plt.xlim(-1, 3.5)
+
+from sklearn.svm import SVC
+model = SVC(kernel='linear', C=1E10)
+model.fit(X,y)
+
+def plot_svc_decision_function(model, ax=None, plot_support=True):
+    """2차원 SVC를 위한 의사결정 함수 플로팅하기"""
+    if ax is None:
+        ax = plt.gca()
+    xlim = ax.get_xlim()
+    ylim = ax.get_ylim()
+    
+    # 모델 평가를 위한 그리드 생성
+    x = np.linspace(xlim[0], ylim[1], 30)
+    y = np.linspace(ylim[0], ylim[1], 30)
+    Y, X = np.meshgrid(y, x)
+    xy = np.vstack([X.ravel(), Y.ravel()]).T
+    P = model.decision_function(xy).reshape(X.shape)
+    
+    # 의사결정 경계와 마진 플로팅
+    ax.contour(X, Y, P, colors='k',
+               levels=[-1,0,1], alpha=.5, linestyles=['--', '-', '--'])
+    
+    if plot_support:
+        ax.scatter(model.support_vectors_[:, 0],
+                   model.support_vectors_[:, 1],
+                   s=300, linewidth=1, facecolors='blue');
+                   
+    ax.set_xlim(xlim)
+    ax.set_ylim(ylim)
+    
+plt.scatter(X[:,0], X[:,1], c=y, s=50, cmap='autumn')
+plot_svc_decision_function(model);
+    
+model.support_vectors_
+
+def plot_svm(N=10, ax=None):
+    X, y = make_blobs(n_samples=200, centers=2, random_state=0, cluster_std=.6)
+    X = X[:N]
+    y = y[:N]
+    model = SVC(kernel='linear', C=1E10)
+    model.fit(X, y)
+    
+    ax = ax or plt.gca()
+    ax.scatter(X[:,0], X[:,1], c=y, s=50, cmap='autumn')
+    ax.set_xlim(-1,4)
+    ax.set_ylim(-1,6)
+    plot_svc_decision_function(model, ax)
+    
+fig, ax = plt.subplots(1, 2, figsize=(16, 6))
+fig.subplots_adjust(left=0.0625, right=.95, wspace=.1)
+for axi, N in zip(ax, [60,120]):
+    plot_svm(N, axi)
+    axi.set_title('N={0}'.format(N))
+    
+from ipywidgets import interact, fixed
+interact(plot_svm, N=[10,200], ax=fixed(None));
+
+from sklearn.datasets.samples_generator import make_circles
+X, y = make_circles(100, factor=.1, noise=.1)
+clf = SVC(kernel='linear').fit(X, y)
+plt.scatter(X[:,0], X[:,1], c=y, s=50, cmap='autumn')
+plot_svc_decision_function(clf, plot_support=False)
+
+# radial basis func
+r = np.exp(-(X**2).sum(1))
+
+from mpl_toolkits import mplot3d
+
+def plot_3D(elev=30, azim=30, X=X, y=y):
+    ax = plt.subplot(projection='3d')
+    ax.scatter3D(X[:,0], X[:,1], r, c=y, s=50, cmap='autumn')
+    ax.view_init(elev=elev, azim=azim)
+    ax.set_xlabel('x')
+    ax.set_ylabel('y')
+    ax.set_zlabel('r')
+    
+interact(plot_3D, elev=[-90,90], azip=(-180,180),
+         X = fixed(X), y=fixed(y));
+
+# rbf :: radial basis function
+clf = SVC(kernel='rbf', C=1E6)
+clf.fit(X, y)
+plt.scatter(X[:,0], X[:,1], c=y, s=50, cmap='autumn')
+plot_svc_decision_function(clf)
+plt.scatter(clf.support_vectors_[:,0], clf.support_vectors_[:,1],
+            s=300, lw=1, facecolors='none')
+
+# adjust svm with margin
+X, y = make_blobs(n_samples=100, centers=2, random_state=0, cluster_std=1.2)
+plt.scatter(X[:,0], X[:,1], c=y, s=50, cmap='autumn')
+
+# C
+X, y = make_blobs(n_samples=100, centers=2, random_state=0, cluster_std=.8)
+fig, ax = plt.subplots(1, 2, figsize=(16, 6))
+fig.subplots_adjust(left=.0625, right=.95, wspace=.1)
+for axi, C in zip(ax, [10.0, .1]):
+    model = SVC(kernel='linear', C=C).fit(X, y)
+    axi.scatter(X[:,0], X[:,1], c=y, s=50, cmap='autumn')
+    plot_svc_decision_function(model, axi)
+    axi.scatter(model.support_vectors_[:,0], model.support_vectors_[:,1],
+                s=300, lw=1, facecolors='none');
+    axi.set_title('C = {0:.1f}'.format(C), size=14)
+
+from sklearn.datasets import fetch_lfw_people
+faces = fetch_lfw_people(min_faces_per_person=60)
+print(faces.target_names)
+print(faces.images.shape)
+
+fig, ax = plt.subplots(3, 5)
+for i, axi in enumerate(ax.flat):
+    axi.imshow(faces.images[i], cmap='bone')
+    axi.set(xticks=[], yticks=[], xlabel=faces.target_names[faces.target[i]])
+    
+from sklearn.svm import SVC    
+from sklearn.decomposition import RandomizedPCA
+from sklearn.pipeline import make_pipeline
+
+pca = RandomizedPCA(n_components=150, whiten=True, random_state=42)
+svc = SVC(kernel='rbf', class_weight='balanced')
+model = make_pipeline(pca, svc)
+
+from sklearn.cross_validation import train_test_split
+X_train, X_test, y_train, y_test = train_test_split(faces.data, faces.target, 
+                                                    random_state=42)
+
+from sklearn.grid_search import GridSearchCV
+param_grid = {'svc__C' : [1, 5, 10, 50],
+              'svc__gamma' : [0.0001, 0.0005, 0.001, 0.005]}
+grid = GridSearchCV(model, param_grid)
+grid.fit(X_train, y_train)
+
+print(grid.best_params_)
+
+model = grid.best_estimator_
+
+yfit = model.predict(X_test)
+yfit
+
+fig, ax = plt.subplots(4, 6)
+for i, axi in enumerate(ax.flat):
+    axi.imshow(X_test[i].reshape(62,47), cmap='bone')
+    axi.set(xticks=[], yticks=[])
+    axi.set_ylabel(faces.target_names[yfit[i]].split()[-1],
+                   color='black' if yfit[i] == y_test[i] else 'red')
+fig.subtitle('Predicted Names ; Incorrect Labels in Red', size=14);
+
+from sklearn.metrics import classification_report
+print(classification_report(y_test, yfit, target_names=faces.target_names))
+
+from sklearn.metrics import confusion_matrix
+mat = confusion_matrix(y_test, yfit)
+sns.heatmap(mat.T, square=True, annot=True, fmt='d', cbar=False, 
+            xticklabels = faces.target_names, yticklabels=faces.target_names)
+plt.xlabel('true label')
+plt.ylabel('predicted label')
+
+
+from sklearn.datasets import make_blobs
+X, y = make_blobs(n_samples=300, centers=4, random_state=0, cluster_std=1.0)
+plt.scatter(X[:,0], X[:,1], c=y, s=50, cmap='rainbow')
+
+from sklearn.tree import DecisionTreeClassifier
+tree = DecisionTreeClassifier().fit(X, y)
+
+def visualize_classifier(model, X, y, ax=None, cmap='rainbow'):
+    ax = ax or plt.gca()
+    
+    # scatter plot
+    ax.scatter(X[:,0], X[:,1], c=y, s=30, cmap=cmap, clim=(y.min(), y.max()), zorder=3)
+    ax.axis('tight')
+    ax.axis('off')
+    xlim = ax.get_xlim()
+    ylim = ax.get_ylim()
+    
+    # fitting
+    model.fit(X, y)
+    
+    xx, yy = np.meshgrid(np.linspace(*xlim, num=200), np.linspace(*ylim, num=200))
+    Z = model.predict(np.c_[xx.ravel(), yy.ravel()]).reshape(xx.shape)
+    
+    # plotting results
+    n_classes = len(np.unique(y))
+    contours = ax.contourf(xx, yy, Z, alpha=.3, levels=np.arange(n_classes + 1) - .5,
+                           cmap=cmap, clim=(y.min(), y.max()), zorder=1)
+    ax.set(xlim=xlim, ylim=ylim)
+
+visualize_classifier(DecisionTreeClassifier(), X, y)
+
+
+
+
+
+
+
+
+
+
 
 
 
