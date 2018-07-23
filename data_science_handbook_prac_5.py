@@ -366,7 +366,16 @@ except Exception as ex:
     }
     print("Done!")
     
-    
+
+from scipy.io import loadmat
+mnist_raw = loadmat(mnist_path)
+mnist = {
+        "data": mnist_raw["data"].T,
+        "target": mnist_raw["label"][0],
+        "COL_NAMES": ["label", "data"],
+        "DESCR": "mldata.org dataset: mnist-original",
+    }
+   
 mnist.keys()
 mnist['data'].shape
 
