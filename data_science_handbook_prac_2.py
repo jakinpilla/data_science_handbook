@@ -297,7 +297,7 @@ df2 = make_df('AB', [3, 4])
 df1
 df2
 pd.concat([df1, df2])
-pd.concat([df1, df2], axis=1)
+.pd.concat([df1, df2], axis=1)
 df3=make_df('AB', [0,1])
 df4=make_df('CD', [0,1])
 df3
@@ -377,6 +377,7 @@ pd.merge(df6,df7)
 pd.merge(df6,df7,how='inner')
 pd.merge(df6,df7,how='outer')
 pd.merge(df6,df7,how='left')
+pd.merge(df6, df7, how='right')
 
 df8=pd.DataFrame({'name':['Bob','Jake','Lisa','Sue'],
                   'rank':[1,2,3,4]})
@@ -433,7 +434,7 @@ df
 planets.groupby('method')['orbital_period'].median()
 for (method,group) in planets.groupby('method'):
     print('{0:30s} shape={1}'.format(method, group.shape))
-planets.groupby('method')['year'].describe().unstack()
+planets.groupby('method')['year'].describe()
 
 # groupby() :: aggregate(), filter(), transform(), apply()
 rng=np.random.RandomState(42)
@@ -443,6 +444,8 @@ df = pd.DataFrame({'key' : ['A', 'B', 'C', 'A', 'B', 'C'],
     columns=['key', 'data1', 'data2'])
 
 df
+df.groupby('key').aggregate(['min', np.median, max])
+df.groupby('key').aggregate(['min', np.median, 'max'])
 df.groupby('key').aggregate([min, np.median, max])
 df.groupby('key').aggregate([min, np.median, 'max'])
 df.groupby('key').aggregate({'data1':'min', 'data2':max})
