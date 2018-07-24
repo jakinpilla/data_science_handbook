@@ -80,9 +80,12 @@ data['b']
 data.keys()
 list(data.items())
 data['e']=1.25
-data
-data['a':'c']
-data[0:2]
+data 
+data['a':'c'] # 명시적 인덱스
+data[0:2] # 암묵적 인덱스
+# 명시적 인덱스로 슬라이싱 할 때는 최종 인덱스가 슬라이스에 포함되지만,
+# 암묵적 인덱스로 슬라이싱 하면 최종 인덱스가 그 슬라이스에서 제외됨.
+
 data[(data>0.3) & (data<0.8)]
 data[['a', 'c']]
 
@@ -147,6 +150,8 @@ A
 B = pd.DataFrame(rng.randint(0,10,(3,3)),columns=list('BAC'))
 B
 A+B
+A
+A.stack()
 A.stack().mean()
 fill = A.stack().mean()
 A.add(B, fill_value=fill)
@@ -181,6 +186,8 @@ df = pd.DataFrame([[1, np.nan, 2],
 df
 df.dropna()
 df.dropna(axis='columns')
+df.dropna(axis=0)
+df.dropna(axis=1)
 df[3]=np.nan
 df
 df.dropna(axis='columns', how='all')
@@ -290,7 +297,7 @@ df2 = make_df('AB', [3, 4])
 df1
 df2
 pd.concat([df1, df2])
-pd.concat([df1, df2], axis=1)
+.pd.concat([df1, df2], axis=1)
 df3=make_df('AB', [0,1])
 df4=make_df('CD', [0,1])
 df3
@@ -370,6 +377,7 @@ pd.merge(df6,df7)
 pd.merge(df6,df7,how='inner')
 pd.merge(df6,df7,how='outer')
 pd.merge(df6,df7,how='left')
+pd.merge(df6, df7, how='right')
 
 df8=pd.DataFrame({'name':['Bob','Jake','Lisa','Sue'],
                   'rank':[1,2,3,4]})
@@ -426,7 +434,7 @@ df
 planets.groupby('method')['orbital_period'].median()
 for (method,group) in planets.groupby('method'):
     print('{0:30s} shape={1}'.format(method, group.shape))
-planets.groupby('method')['year'].describe().unstack()
+planets.groupby('method')['year'].describe()
 
 # groupby() :: aggregate(), filter(), transform(), apply()
 rng=np.random.RandomState(42)
@@ -436,6 +444,8 @@ df = pd.DataFrame({'key' : ['A', 'B', 'C', 'A', 'B', 'C'],
     columns=['key', 'data1', 'data2'])
 
 df
+df.groupby('key').aggregate(['min', np.median, max])
+df.groupby('key').aggregate(['min', np.median, 'max'])
 df.groupby('key').aggregate([min, np.median, max])
 df.groupby('key').aggregate([min, np.median, 'max'])
 df.groupby('key').aggregate({'data1':'min', 'data2':max})
