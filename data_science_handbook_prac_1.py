@@ -7,7 +7,6 @@ Created on Thu Jul 12 08:09:18 2018
 
 from os import getcwd, chdir
 getcwd()
-<<<<<<< HEAD
 #chdir('C:/Users/dsc/data_science_handbook')
 chdir('C:/Users/daniel/data_science_handbook')
 
@@ -16,26 +15,26 @@ import pandas as pd
 pd.set_option('display.max_rows', 500)
 pd.set_option('display.max_columns', 500)
 pd.set_option('display.width', 1000)
-=======
-chdir('C:/Users/dsc/data_science_handbook')
->>>>>>> 6923c0a9f4fea0fc0b45087768eed216a843dbdb
+chdir('C:/Users/daniel/data_science_handbook')
+
 
 import math
 math.sin(2)
 math.cos(2)
 
-<<<<<<< HEAD
-=======
 print(In)
 Out
 
 import numpy as np
->>>>>>> 6923c0a9f4fea0fc0b45087768eed216a843dbdb
+
 np.random.seed(0)
 
 x1 = np.random.randint(10, size=6)
+x1
 x2 = np.random.randint(10, size=(3, 4))
+x2
 x3 = np.random.randint(10, size=(3, 4, 5))
+x3
 
 print('x3 ndim:', x3.ndim)
 print('x3 shape: ', x3.shape)
@@ -552,7 +551,6 @@ np.dtype({'names' : ('name', 'age', 'weight'),
           'formats' : ('U10', 'i4', 'f8')})
 np.dtype({'names' : ('name', 'age', 'weight')})
 
-<<<<<<< HEAD
 np.dtype({'names' : ('name', 'age', 'weight'),
          'formats' : ((np.str_, 10), int, np.float32)})
 np.dtype([('name', 'S10'), ('age', 'i4'), ('weight', 'f8')])
@@ -566,7 +564,7 @@ print(X['mat'][0])
 data['age']
 data_rec = data.view(np.recarray)
 data_rec.age
-=======
+
 
 
 
