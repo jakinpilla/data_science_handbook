@@ -80,9 +80,12 @@ data['b']
 data.keys()
 list(data.items())
 data['e']=1.25
-data
-data['a':'c']
-data[0:2]
+data 
+data['a':'c'] # 명시적 인덱스
+data[0:2] # 암묵적 인덱스
+# 명시적 인덱스로 슬라이싱 할 때는 최종 인덱스가 슬라이스에 포함되지만,
+# 암묵적 인덱스로 슬라이싱 하면 최종 인덱스가 그 슬라이스에서 제외됨.
+
 data[(data>0.3) & (data<0.8)]
 data[['a', 'c']]
 
@@ -147,6 +150,8 @@ A
 B = pd.DataFrame(rng.randint(0,10,(3,3)),columns=list('BAC'))
 B
 A+B
+A
+A.stack()
 A.stack().mean()
 fill = A.stack().mean()
 A.add(B, fill_value=fill)
@@ -181,6 +186,8 @@ df = pd.DataFrame([[1, np.nan, 2],
 df
 df.dropna()
 df.dropna(axis='columns')
+df.dropna(axis=0)
+df.dropna(axis=1)
 df[3]=np.nan
 df
 df.dropna(axis='columns', how='all')
