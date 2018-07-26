@@ -718,7 +718,7 @@ def plot_svm(N=10, ax=None):
     plot_svc_decision_function(model, ax)
     
 fig, ax = plt.subplots(1, 2, figsize=(16, 6))
-fig.subplots_adjust(left=0.0625, right=.95, wspace=.1)
+fig.subplots_adjust(left=0.0625, right=.95, wspace=.1) # fig.subplots_adjust() ??
 for axi, N in zip(ax, [60,120]):
     plot_svm(N, axi)
     axi.set_title('N={0}'.format(N))
