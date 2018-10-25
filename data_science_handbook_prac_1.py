@@ -7,27 +7,23 @@ Created on Thu Jul 12 08:09:18 2018
 
 from os import getcwd, chdir
 getcwd()
-<<<<<<< HEAD
+
 #chdir('C:/Users/dsc/data_science_handbook')
+
 chdir('C:/Users/daniel/data_science_handbook')
-=======
 
 chdir('C:/Users/dsc/data_science_handbook')
 #chdir('C:/Users/daniel/data_science_handbook')
->>>>>>> 2b28a5f8f546f4c519ce6aea35239a9a5544b1cb
 
 import numpy as np
 import pandas as pd
 pd.set_option('display.max_rows', 500)
 pd.set_option('display.max_columns', 500)
 pd.set_option('display.width', 1000)
-<<<<<<< HEAD
 chdir('C:/Users/daniel/data_science_handbook')
 
-=======
 
 chdir('C:/Users/dsc/data_science_handbook')
->>>>>>> 2b28a5f8f546f4c519ce6aea35239a9a5544b1cb
 
 import math
 math.sin(2)
@@ -37,10 +33,6 @@ print(In)
 Out
 
 import numpy as np
-<<<<<<< HEAD
-
-=======
->>>>>>> 2b28a5f8f546f4c519ce6aea35239a9a5544b1cb
 np.random.seed(0)
 
 x1 = np.random.randint(10, size=6)
